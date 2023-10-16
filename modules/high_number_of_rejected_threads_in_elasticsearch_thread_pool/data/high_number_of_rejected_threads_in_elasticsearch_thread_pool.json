@@ -1,0 +1,162 @@
+{
+  "name": "high_number_of_rejected_threads_in_elasticsearch_thread_pool",
+  "description": "This incident type occurs when the Elasticsearch thread pool rejects a high number of threads. Thread pools are used to manage the number of concurrent threads that are executing in an application. When a thread pool becomes overwhelmed, it may start rejecting new threads, leading to a high number of rejected threads. This can cause performance issues and impact the availability of the Elasticsearch cluster. It is important to investigate the root cause of this incident and take necessary actions to prevent it from happening in the future.",
+  "params": [
+    {
+      "name": "ELASTICSEARCH_HOST",
+      "value": ""
+    },
+    {
+      "name": "ELASTICSEARCH_PID",
+      "value": ""
+    },
+    {
+      "name": "ELASTICSEARCH_PORT",
+      "value": ""
+    },
+    {
+      "name": "PROCESS_NAME",
+      "value": ""
+    },
+    {
+      "name": "ELASTICSEARCH_LOG_FILE_PATH",
+      "value": ""
+    },
+    {
+      "name": "NEW_THREAD_POOL_SIZE",
+      "value": ""
+    },
+    {
+      "name": "ELASTICSEARCH_CONFIG_FILE_PATH",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "NAMESPACE",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## High Number of Rejected Threads in Elasticsearch Thread Pool\nThis incident type occurs when the Elasticsearch thread pool rejects a high number of threads. Thread pools are used to manage the number of concurrent threads that are executing in an application. When a thread pool becomes overwhelmed, it may start rejecting new threads, leading to a high number of rejected threads. This can cause performance issues and impact the availability of the Elasticsearch cluster. It is important to investigate the root cause of this incident and take necessary actions to prevent it from happening in the future."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check Elasticsearch thread pool rejection count"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `curl -XGET '${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT}/_cat/thread_pool?v&h=name,rejected'`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check Elasticsearch thread pool size and queue capacity"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `curl -XGET '${ELASTICSEARCH_HOST}:${ELASTICSEARCH_PORT}/_nodes/stats/thread_pool?pretty'`"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check Elasticsearch logs for any errors related to thread pool rejection"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `grep 'rejected execution' ${ELASTICSEARCH_LOG_FILE_PATH}`"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the number of available threads in the system"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `cat /proc/sys/kernel/threads-max`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the maximum number of threads allowed per process"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `ulimit -u`"
+    },
+    {
+      "name": "cell_12",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the current number of threads per process"
+    },
+    {
+      "name": "cell_13",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `ps -eo nlwp,pid,cmd | grep ${PROCESS_NAME}`"
+    },
+    {
+      "name": "cell_14",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the system load"
+    },
+    {
+      "name": "cell_15",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `uptime`"
+    },
+    {
+      "name": "cell_16",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the CPU usage of Elasticsearch process"
+    },
+    {
+      "name": "cell_17",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `top -p ${ELASTICSEARCH_PID}`"
+    },
+    {
+      "name": "cell_18",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Increase the size of the thread pool to handle a higher number of concurrent threads. This can be done by adjusting the thread pool settings in the Elasticsearch configuration file."
+    },
+    {
+      "name": "cell_19",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_change_thread_pool_size($NEW_THREAD_POOL_SIZE, $ELASTICSEARCH_CONFIG_FILE_PATH)"
+    }
+  ]
+}
